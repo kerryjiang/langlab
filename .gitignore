@@ -4,3 +4,8 @@ priv
 *.o
 *.beam
 *.plt
+bin
+obj
+_ReSharper.*
+*.suo
+*.user
