@@ -3,7 +3,7 @@
 -export([stop/0]).
 
 start(Port) ->
-	ListenPID = spawn(fun() -> startListen(Port) end),
+	ListenPID = spawn_link(fun() -> startListen(Port) end),
 	put("ListenPID", ListenPID),
 	ListenPID.
 
@@ -29,7 +29,7 @@ startListen(Port) ->
 acceptLoop(Listen) ->
 	{ok, Socket} = gen_tcp:accept(Listen),
 		io:format("New client accepted.~n"),
-		PID = spawn(fun() -> clientLoop(Socket) end),
+		PID = spawn_link(fun() -> clientLoop(Socket) end),
 	    gen_tcp:controlling_process(Socket, PID),
 		acceptLoop(Listen).
 
