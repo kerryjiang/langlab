@@ -13,7 +13,7 @@ stop() ->
 	ListenPID.
 
 startListen(Port) ->
-	case gen_tcp:listen(Port, [binary, {packet, 0},
+	case gen_tcp:listen(Port, [binary, {packet, line},
 					 {reuseaddr, true},
 					 {active, once}]) of
 		
@@ -29,23 +29,18 @@ startListen(Port) ->
 acceptLoop(Listen) ->
 	{ok, Socket} = gen_tcp:accept(Listen),
 		io:format("New client accepted.~n"),
-		PID = spawn_link(fun() -> clientLoop(Socket) end),
+		PID = spawn_link(fun() -> loopClient(Socket) end),
 	    gen_tcp:controlling_process(Socket, PID),
 		acceptLoop(Listen).
 
-clientLoop(S) ->	
+loopClient(S) ->	
 	inet:setopts(S, [{active, once}]),	
 	receive
-	{tcp, Socket, Data} ->
-%%	    io:format("Server received binary = ~p~n", [Data]),
-%% 	    Str = binary_to_term(Bin),
-%% 	    io:format("Server (unpacked)  ~p~n",[Str]),
-%% 	    Reply = lib_misc:string2value(Str),
-%% 	    io:format("Server replying = ~p~n",[Reply]),
-	    gen_tcp:send(Socket, Data),
-	    clientLoop(Socket);
-	{tcp_closed, Socket} ->
-	    io:format("Socket ~p closed~n", [Socket]);
-	{tcp_error, Socket, Reason} ->
-        io:format("Error on socket ~p reason: ~p~n", [Socket, Reason])
+		{tcp, Socket, Line} ->
+			gen_tcp:send(Socket, Line),
+			loopClient(Socket);
+		{tcp_closed, Socket} ->
+		    io:format("Socket ~p closed~n", [Socket]);
+		{tcp_error, Socket, Reason} ->
+	        io:format("Error on socket ~p reason: ~p~n", [Socket, Reason])
     end.
