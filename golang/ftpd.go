@@ -10,6 +10,10 @@ import (
 
 var addr = flag.String("addr", ":2121", "The addr to listen (':2121')")
 
+var commands = map[string]FtpCommand {
+	
+}
+
 func main() {
 	log.SetFlags(log.LstdFlags | log.Lshortfile)
 
@@ -24,7 +28,7 @@ func main() {
 	
 	exit := make(chan bool) 
 
-	go startAccept(ln, exit)
+	go startAccept(ln, exit, wd)
 	
 	reader := bufio.NewReader(os.Stdin)
 	
@@ -42,14 +46,17 @@ func main() {
 	log.Println("The listener is stopped")
 }
 
-func startAccept(ln net.Listener, exit chan(bool)) {
+func startAccept(ln net.Listener, exit chan(bool), root string) {
 	for {
 		ret, ok := <-exit
 		if ok && !ret  {
-			_, err := ln.Accept()
+			conn, err := ln.Accept()
 			if err != nil {
 				log.Fatal(err)
 			}
+			
+			var session = FtpSession { Conn: conn, Root: root }			
+			go session.Process(commands)			
 		} else {
 			break
 		}
